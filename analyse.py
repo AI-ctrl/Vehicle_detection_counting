@@ -6,10 +6,10 @@ from itertools import islice
 import numpy as np
 import math
 
-def getCountLineCrossed(pointList):
+def getCountLineCrossed(pointList,x,y):
 
-    a = (40,500)
-    b = (500,500)
+    a = x
+    b = y
     
     position = ((b[0] - a[0])*(pointList[0][1] - a[1]) - (b[1] - a[1])*(pointList[0][0] - a[0]))
     prevposition = ((b[0] - a[0])*(pointList[0 - 5][1] - a[1]) - (b[1] - a[1])*(pointList[0 - 5][0] - a[0]))

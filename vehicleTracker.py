@@ -17,6 +17,27 @@ import cv2
 import threading
 import pickle
 
+import argparse
+
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-v", "--video", required=True,
+	help="path to video")
+
+ap.add_argument("-x1", "--x1", required=True,
+	help="X_x1",type=int)
+
+ap.add_argument("-x2", "--x2", required=True,
+	help="X_x2",type=int)
+
+ap.add_argument("-y1", "--y1", required=True,
+	help="Y_y1",type=int)
+
+ap.add_argument("-y2", "--y2", required=True,
+	help="Y_y2",type=int)
+
+args = vars(ap.parse_args())
+
 
 # config_path = "config/faces.cfg"
 # weights_path = "config/faces.weights"
@@ -84,7 +105,8 @@ def detect_image(img, classList):
     return None
 
 
-video = cv2.VideoCapture("/home/ai-ctrl/Downloads/Night Time Traffic Camera video.mp4")
+# video = cv2.VideoCapture("/home/ai-ctrl/Downloads/Night Time Traffic Camera video.mp4")
+video = cv2.VideoCapture(args["video"])
 
 colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 0, 255), (128, 0, 0),
            (0, 128, 0), (0, 0, 128), (128, 0, 128), (128, 128, 0), (0, 128, 128)]
@@ -131,7 +153,7 @@ while video.isOpened():
         print("fix YOUR cam FIRST")
         exit
     frames += 1
-    classList = ["car"]
+    classList = ["car","motorbike","bus"]
 
     h,w,_ = frame.shape
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -201,9 +223,8 @@ while video.isOpened():
                 if calculateSpeed:
                     speed = getSpeed(pointsDict[Id])
                     totalSpeed += speed
-                # if(frames % 10 == 0):
                 if calculateLineCrossed:
-                    lineCrossed = getCountLineCrossed(pointsDict[Id])
+                    lineCrossed = getCountLineCrossed(pointsDict[Id],(args["x1"],args["y1"]),(args["x2"],args["y2"]))
                     if lineCrossed != None:
                         if Id not in lineCrossingIDs:
                             if lineCrossed == "left":
@@ -228,7 +249,7 @@ while video.isOpened():
 
     #visualize line
     if calculateLineCrossed:
-        cv2.line(frame, (0,int(h/2)), (w,int(h/2)), [0, 255, 0], 10)
+        cv2.line(frame, (args["x1"],args["y1"]), (args["x2"],args["y2"]), [0, 255, 0], 10)
         cv2.putText(frame, "vehicles count line crossed to left " + str(totalLineCrossedLeft), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)            
         cv2.putText(frame, "vehicles count line crossed to right " + str(totalLineCrossedRight), (0, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)            
         cv2.putText(frame, "vehicles count line crossed Total " + str(totalLineCrossed), (0, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)            
@@ -237,21 +258,13 @@ while video.isOpened():
         cv2.putText(frame, "vehicles count " + str(vehiclecount), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)            
     #get total people count
     if calculateTotalVehicleCount:
-        cv2.putText(frame, "total vehicles count " + str(len(TrackedIDs)), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)            
-    #get total direction
-    totalxdir = None
-    totalydir = None
-    # if calculateDirection:
-    #     totalxdir, totalydir = getTotalDirection(left,right,up,down)
-    #     cv2.putText(frame, "Total Xdir " + totalxdir, (0, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)            
-    #     cv2.putText(frame, "total Ydir " + totalydir, (0, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)   
+        cv2.putText(frame, "total vehicles count " + str(len(TrackedIDs)), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
     #get Average speed
     if vehiclecount != 0:
         totalSpeed/vehiclecount
     else:
         totalSpeed = 0
     #visualize
-    #frame = cv2.resize(frame, (1920,1080))
     fps = 1./(time.time()-t1)
     cv2.putText(frame, "FPS: {:.2f}".format(fps), (0,30), 0, 1, (0,0,255), 2)
     cv2.imshow('Stream', frame)
